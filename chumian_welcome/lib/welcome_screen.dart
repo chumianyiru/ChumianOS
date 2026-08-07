@@ -116,10 +116,38 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ],
           ),
         ),
-        content: Text(
-          'ChumianOS 已成功激活\n正在进入桌面...',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: ChumianTheme.textDark.withOpacity(0.7)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'ChumianOS 已成功激活',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: ChumianTheme.textDark.withOpacity(0.7)),
+            ),
+            SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.pink.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: ChumianTheme.primaryPink, size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '无 Root 模式已启用\n核心功能均可正常使用',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: ChumianTheme.primaryPink,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
           Center(
