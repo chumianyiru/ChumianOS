@@ -42,7 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         {'icon': Icons.apps, 'title': '应用管理', 'subtitle': '共 42 个应用', 'color': Colors.orange},
         {'icon': Icons.security, 'title': '权限管理', 'subtitle': '', 'color': Colors.red},
         {'icon': Icons.notifications, 'title': '通知管理', 'subtitle': '', 'color': Colors.pink},
-        {'icon': Icons.default_icon_sharp, 'title': '默认应用', 'subtitle': '', 'color': Colors.blueGrey},
+        {'icon': Icons.app_settings_alt, 'title': '默认应用', 'subtitle': '', 'color': Colors.blueGrey},
       ],
     },
     {
