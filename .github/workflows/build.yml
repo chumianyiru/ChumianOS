@@ -26,22 +26,22 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd launcher
+          cd chumian_launcher
           flutter pub get
 
       - name: Build APK
         run: |
-          cd launcher
+          cd chumian_launcher
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload Launcher APK
         uses: actions/upload-artifact@v4
         with:
           name: chumian-launcher-apk
-          path: launcher/build/app/outputs/flutter-apk/app-release.apk
+          path: chumian_launcher/build/app/outputs/flutter-apk/app-release.apk
 
-  build-settings:
-    name: Build ChumianOS Settings
+  build-welcome:
+    name: Build ChumianOS Welcome
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -60,50 +60,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd settings
+          cd chumian_welcome
           flutter pub get
 
       - name: Build APK
         run: |
-          cd settings
+          cd chumian_welcome
           flutter build apk --release --no-tree-shake-icons
 
-      - name: Upload Settings APK
+      - name: Upload Welcome APK
         uses: actions/upload-artifact@v4
         with:
-          name: chumian-settings-apk
-          path: settings/build/app/outputs/flutter-apk/app-release.apk
-
-  build-setup-wizard:
-    name: Build ChumianOS Setup Wizard
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.22.0'
-          channel: 'stable'
-
-      - name: Install dependencies
-        run: |
-          cd setup-wizard
-          flutter pub get
-
-      - name: Build APK
-        run: |
-          cd setup-wizard
-          flutter build apk --release --no-tree-shake-icons
-
-      - name: Upload Setup Wizard APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: chumian-setup-wizard-apk
-          path: setup-wizard/build/app/outputs/flutter-apk/app-release.apk
+          name: chumian-welcome-apk
+          path: chumian_welcome/build/app/outputs/flutter-apk/app-release.apk
