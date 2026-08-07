@@ -1,56 +1,75 @@
-name: ChumianOS Build
+name: Build ChumianOS APKs
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build-launcher:
+    name: Build ChumianOS Launcher
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - uses: actions/setup-java@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
+          distribution: 'zulu'
           java-version: '17'
-          distribution: 'temurin'
-      
-      - uses: subosito/flutter-action@v2
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.44.2'
           channel: 'stable'
-      
-      - name: Build Launcher APK
-        working-directory: ./launcher
+
+      - name: Install dependencies
         run: |
+          cd chumian_launcher
           flutter pub get
-          flutter build apk --release --target-platform android-arm64
-          mv build/app/outputs/flutter-apk/app-release.apk ../chumian-launcher.apk
-      
-      - name: Build Setup Wizard APK
-        working-directory: ./setup-wizard
+
+      - name: Build APK
         run: |
-          flutter pub get
-          flutter build apk --release --target-platform android-arm64
-          mv build/app/outputs/flutter-apk/app-release.apk ../chumian-setup.apk
-      
-      - name: Upload Artifacts
+          cd chumian_launcher
+          flutter build apk --release --no-tree-shake-icons
+
+      - name: Upload Launcher APK
         uses: actions/upload-artifact@v4
         with:
-          name: chumianos-apks
-          path: |
-            chumian-launcher.apk
-            chumian-setup.apk
-      
-      - name: Create Release
-        if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
+          name: chumian-launcher-apk
+          path: chumian_launcher/build/app/outputs/flutter-apk/app-release.apk
+
+  build-welcome:
+    name: Build ChumianOS Welcome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          tag_name: v1.0.0-${{ github.run_number }}
-          name: ChumianOS Build ${{ github.run_number }}
-          files: |
-            chumian-launcher.apk
-            chumian-setup.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: |
+          cd chumian_welcome
+          flutter pub get
+
+      - name: Build APK
+        run: |
+          cd chumian_welcome
+          flutter build apk --release --no-tree-shake-icons
+
+      - name: Upload Welcome APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: chumian-welcome-apk
+          path: chumian_welcome/build/app/outputs/flutter-apk/app-release.apk

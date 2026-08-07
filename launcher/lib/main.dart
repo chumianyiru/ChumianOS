@@ -1,60 +1,49 @@
-import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:dynamic_color/dynamic_color.dart';
-import 'providers/app_provider.dart';
-import 'providers/settings_provider.dart';
-import 'providers/widget_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/app_provider.dart';
+import 'providers/widget_provider.dart';
+import 'providers/settings_provider.dart';
 import 'screens/launcher_screen.dart';
+import 'screens/lock_screen.dart';
 import 'screens/settings_screen.dart';
-import 'themes/app_themes.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.immersiveSticky,
-    overlays: [],
-  );
-  
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-
-  runApp(const ChumianLauncher());
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  SystemChrome.setSystemUIChangeCallback((systemOverlaysAreVisible) async {
+    await Future.delayed(const Duration(seconds: 2));
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  });
+  runApp(const ChumianLauncherApp());
 }
 
-class ChumianLauncher extends StatelessWidget {
-  const ChumianLauncher({super.key});
+class ChumianLauncherApp extends StatelessWidget {
+  const ChumianLauncherApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AppProvider()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => WidgetProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => AppProvider()),
+        ChangeNotifierProvider(create: (_) => WidgetProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],
-      child: DynamicColorBuilder(
-        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-          return Consumer<ThemeProvider>(
-            builder: (context, themeProvider, child) {
-              return MaterialApp(
-                title: 'ChumianOS',
-                debugShowCheckedModeBanner: false,
-                theme: AppThemes.lightTheme(lightDynamic),
-                darkTheme: AppThemes.darkTheme(darkDynamic),
-                themeMode: themeProvider.themeMode,
-                home: const LauncherScreen(),
-                routes: {
-                  '/settings': (context) => const SettingsScreen(),
-                },
-              );
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'ChumianOS',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light(themeProvider.currentTheme),
+            darkTheme: AppTheme.dark(themeProvider.currentTheme),
+            themeMode: themeProvider.themeMode,
+            home: const LauncherScreen(),
+            routes: {
+              '/lock': (context) => const LockScreen(),
+              '/settings': (context) => const SettingsScreen(),
             },
           );
         },

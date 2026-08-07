@@ -1,4 +1,4 @@
-name: chumian_setup
+name: chumian_setup_wizard
 description: ChumianOS Setup Wizard
 publish_to: 'none'
 version: 1.0.0+1

@@ -4,7 +4,7 @@ import 'screens/activation_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky, overlays: []);
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   runApp(const SetupWizardApp());
 }
 
@@ -14,18 +14,13 @@ class SetupWizardApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ChumianOS Setup',
+      title: '激活引导',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6750A4)),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFD0BCFF),
-          brightness: Brightness.dark,
+          seedColor: const Color(0xFFFF6B9D),
+          brightness: Brightness.light,
         ),
       ),
       home: const ActivationScreen(),

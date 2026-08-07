@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,7 +11,6 @@ class AppInfo {
   final bool isSystemApp;
   final bool isEnabled;
   final List<String> shortcuts;
-  int? category;
 
   AppInfo({
     required this.packageName,
@@ -21,7 +19,6 @@ class AppInfo {
     this.isSystemApp = false,
     this.isEnabled = true,
     this.shortcuts = const [],
-    this.category,
   });
 
   Map<String, dynamic> toJson() => {
@@ -31,7 +28,6 @@ class AppInfo {
     'isSystemApp': isSystemApp,
     'isEnabled': isEnabled,
     'shortcuts': shortcuts,
-    'category': category,
   };
 
   factory AppInfo.fromJson(Map<String, dynamic> json) => AppInfo(
@@ -41,24 +37,30 @@ class AppInfo {
     isSystemApp: json['isSystemApp'] ?? false,
     isEnabled: json['isEnabled'] ?? true,
     shortcuts: List<String>.from(json['shortcuts'] ?? []),
-    category: json['category'],
   );
 }
 
 class AppProvider extends ChangeNotifier {
   List<AppInfo> _apps = [];
   List<AppInfo> _hiddenApps = [];
+  bool _isLoading = true;
+
   List<AppInfo> get apps => _apps;
   List<AppInfo> get hiddenApps => _hiddenApps;
-  
+  bool get isLoading => _isLoading;
+
   static const platform = MethodChannel('com.chumianos.launcher/system');
-  
+
   AppProvider() {
     _loadApps();
   }
 
   Future<void> _loadApps() async {
+    _isLoading = true;
+    notifyListeners();
     await _scanInstalledApps();
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> _scanInstalledApps() async {
@@ -71,32 +73,56 @@ class AppProvider extends ChangeNotifier {
 
       final prefs = await SharedPreferences.getInstance();
       final hiddenPackages = prefs.getStringList('hidden_apps') ?? [];
-      final customNames = prefs.getString('custom_app_names');
-      final Map<String, String> nameMap = customNames != null 
-          ? Map<String, String>.from(jsonDecode(customNames)) 
-          : {};
+      
+      final hiddenPackagesSet = {...hiddenPackages, 'com.android.settings'};
 
       _apps = installedApps.where((app) {
-        return !hiddenPackages.contains(app.packageName) && 
+        return !hiddenPackagesSet.contains(app.packageName) &&
                app.packageName != 'com.chumianos.launcher' &&
                app.packageName != 'com.chumianos.setupwizard';
       }).map((app) {
         final appInfo = app as ApplicationWithIcon;
         return AppInfo(
           packageName: app.packageName,
-          appName: nameMap[app.packageName] ?? app.appName,
+          appName: app.appName,
           iconBase64: base64Encode(appInfo.icon),
           isSystemApp: app.systemApp,
           isEnabled: app.enabled,
-          shortcuts: [],
+          shortcuts: _getShortcuts(app.packageName),
         );
       }).toList();
 
       _apps.sort((a, b) => a.appName.compareTo(b.appName));
-      notifyListeners();
+
+      _hiddenApps = installedApps.where((app) {
+        return hiddenPackagesSet.contains(app.packageName);
+      }).map((app) {
+        final appInfo = app as ApplicationWithIcon;
+        return AppInfo(
+          packageName: app.packageName,
+          appName: app.appName,
+          iconBase64: base64Encode(appInfo.icon),
+          isSystemApp: app.systemApp,
+          isEnabled: app.enabled,
+        );
+      }).toList();
     } catch (e) {
       debugPrint('Error loading apps: $e');
     }
+  }
+
+  List<String> _getShortcuts(String packageName) {
+    final shortcuts = <String>[];
+    if (packageName.contains('phone') || packageName.contains('dialer')) {
+      shortcuts.addAll(['快速拨号', '最近通话', '收藏联系人']);
+    } else if (packageName.contains('camera')) {
+      shortcuts.addAll(['拍照', '录像', '自拍']);
+    } else if (packageName.contains('message') || packageName.contains('sms')) {
+      shortcuts.addAll(['新建短信', '最近消息']);
+    } else if (packageName.contains('browser') || packageName.contains('chrome')) {
+      shortcuts.addAll(['新建标签页', '无痕模式', '历史记录']);
+    }
+    return shortcuts;
   }
 
   Future<void> launchApp(String packageName) async {
@@ -111,8 +137,17 @@ class AppProvider extends ChangeNotifier {
     try {
       await platform.invokeMethod('uninstallApp', {'packageName': packageName});
       await _scanInstalledApps();
+      notifyListeners();
     } catch (e) {
       debugPrint('Error uninstalling app: $e');
+    }
+  }
+
+  Future<void> openAppInfo(String packageName) async {
+    try {
+      await platform.invokeMethod('openAppInfo', {'packageName': packageName});
+    } catch (e) {
+      debugPrint('Error opening app info: $e');
     }
   }
 
@@ -124,6 +159,7 @@ class AppProvider extends ChangeNotifier {
       await prefs.setStringList('hidden_apps', hiddenPackages);
     }
     await _scanInstalledApps();
+    notifyListeners();
   }
 
   Future<void> showApp(String packageName) async {
@@ -132,10 +168,12 @@ class AppProvider extends ChangeNotifier {
     hiddenPackages.remove(packageName);
     await prefs.setStringList('hidden_apps', hiddenPackages);
     await _scanInstalledApps();
+    notifyListeners();
   }
 
   Future<void> refreshApps() async {
     await _scanInstalledApps();
+    notifyListeners();
   }
 
   AppInfo? getAppByPackage(String packageName) {

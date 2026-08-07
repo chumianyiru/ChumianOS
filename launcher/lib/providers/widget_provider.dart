@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -64,41 +63,42 @@ class WidgetProvider extends ChangeNotifier {
   List<DesktopWidget> get widgets => _widgets;
 
   final List<Map<String, dynamic>> availableWidgets = [
-    {'type': 'clock_analog', 'name': '模拟时钟', 'icon': Icons.access_time, 'w': 2, 'h': 2},
-    {'type': 'clock_digital', 'name': '数字时钟', 'icon': Icons.timer, 'w': 2, 'h': 1},
-    {'type': 'clock_flip', 'name': '翻页时钟', 'icon': Icons.flip, 'w': 2, 'h': 1},
-    {'type': 'weather', 'name': '天气', 'icon': Icons.wb_sunny, 'w': 2, 'h': 2},
-    {'type': 'calendar', 'name': '日历', 'icon': Icons.calendar_today, 'w': 2, 'h': 2},
-    {'type': 'battery', 'name': '电池', 'icon': Icons.battery_full, 'w': 1, 'h': 1},
-    {'type': 'music', 'name': '音乐', 'icon': Icons.music_note, 'w': 2, 'h': 1},
-    {'type': 'search', 'name': '搜索', 'icon': Icons.search, 'w': 4, 'h': 1},
-    {'type': 'notes', 'name': '便签', 'icon': Icons.sticky_note_2, 'w': 2, 'h': 2},
-    {'type': 'photos', 'name': '照片', 'icon': Icons.photo, 'w': 2, 'h': 2},
-    {'type': 'cpu', 'name': 'CPU', 'icon': Icons.memory, 'w': 1, 'h': 1},
-    {'type': 'memory', 'name': '内存', 'icon': Icons.storage, 'w': 1, 'h': 1},
-    {'type': 'network', 'name': '网络', 'icon': Icons.network_check, 'w': 1, 'h': 1},
-    {'type': 'storage', 'name': '存储', 'icon': Icons.sd_storage, 'w': 1, 'h': 1},
-    {'type': 'steps', 'name': '步数', 'icon': Icons.directions_walk, 'w': 1, 'h': 1},
-    {'type': 'timer', 'name': '计时器', 'icon': Icons.hourglass_empty, 'w': 1, 'h': 1},
-    {'type': 'alarm', 'name': '闹钟', 'icon': Icons.alarm, 'w': 1, 'h': 1},
-    {'type': 'world_clock', 'name': '世界时钟', 'icon': Icons.public, 'w': 2, 'h': 1},
-    {'type': 'moon_phase', 'name': '月相', 'icon': Icons.nightlight_round, 'w': 1, 'h': 1},
-    {'type': 'sunrise', 'name': '日出日落', 'icon': Icons.wb_twilight, 'w': 2, 'h': 1},
-    {'type': 'stocks', 'name': '股票', 'icon': Icons.trending_up, 'w': 2, 'h': 1},
-    {'type': 'todo', 'name': '待办', 'icon': Icons.check_circle_outline, 'w': 2, 'h': 2},
-    {'type': 'rss', 'name': 'RSS', 'icon': Icons.rss_feed, 'w': 2, 'h': 2},
-    {'type': 'twitter', 'name': '社交', 'icon': Icons.chat_bubble_outline, 'w': 2, 'h': 1},
-    {'type': 'system_info', 'name': '系统信息', 'icon': Icons.computer, 'w': 2, 'h': 2},
-    {'type': 'flashlight', 'name': '手电筒', 'icon': Icons.flashlight_on, 'w': 1, 'h': 1},
-    {'type': 'calculator', 'name': '计算器', 'icon': Icons.calculate, 'w': 2, 'h': 2},
-    {'type': 'compass', 'name': '指南针', 'icon': Icons.explore, 'w': 2, 'h': 2},
-    {'type': 'level', 'name': '水平仪', 'icon': Icons.straighten, 'w': 2, 'h': 2},
-    {'type': 'ruler', 'name': '尺子', 'icon': Icons.square_foot, 'w': 4, 'h': 1},
-    {'type': 'sound', 'name': '音量', 'icon': Icons.volume_up, 'w': 2, 'h': 1},
-    {'type': 'brightness', 'name': '亮度', 'icon': Icons.brightness_6, 'w': 2, 'h': 1},
-    {'type': 'wifi_toggle', 'name': 'WiFi', 'icon': Icons.wifi, 'w': 1, 'h': 1},
-    {'type': 'bluetooth_toggle', 'name': '蓝牙', 'icon': Icons.bluetooth, 'w': 1, 'h': 1},
-    {'type': 'airplane_toggle', 'name': '飞行模式', 'icon': Icons.airplanemode_active, 'w': 1, 'h': 1},
+    {'type': 'clock_analog', 'name': '模拟时钟', 'icon': Icons.access_time, 'w': 2, 'h': 2, 'category': '时间'},
+    {'type': 'clock_digital', 'name': '数字时钟', 'icon': Icons.timer, 'w': 2, 'h': 1, 'category': '时间'},
+    {'type': 'clock_flip', 'name': '翻页时钟', 'icon': Icons.flip_to_front, 'w': 2, 'h': 1, 'category': '时间'},
+    {'type': 'clock_world', 'name': '世界时钟', 'icon': Icons.public, 'w': 2, 'h': 1, 'category': '时间'},
+    {'type': 'date_display', 'name': '日期显示', 'icon': Icons.calendar_today, 'w': 2, 'h': 1, 'category': '时间'},
+    {'type': 'weather', 'name': '天气', 'icon': Icons.wb_sunny, 'w': 2, 'h': 2, 'category': '生活'},
+    {'type': 'weather_mini', 'name': '迷你天气', 'icon': Icons.cloud, 'w': 1, 'h': 1, 'category': '生活'},
+    {'type': 'calendar_month', 'name': '月历', 'icon': Icons.calendar_month, 'w': 2, 'h': 2, 'category': '时间'},
+    {'type': 'battery', 'name': '电池', 'icon': Icons.battery_full, 'w': 1, 'h': 1, 'category': '系统'},
+    {'type': 'battery_circle', 'name': '环形电池', 'icon': Icons.battery_charging_full, 'w': 1, 'h': 1, 'category': '系统'},
+    {'type': 'music', 'name': '音乐播放器', 'icon': Icons.music_note, 'w': 2, 'h': 1, 'category': '娱乐'},
+    {'type': 'search', 'name': '搜索栏', 'icon': Icons.search, 'w': 4, 'h': 1, 'category': '工具'},
+    {'type': 'notes', 'name': '便签', 'icon': Icons.sticky_note_2, 'w': 2, 'h': 2, 'category': '工具'},
+    {'type': 'photos', 'name': '照片相框', 'icon': Icons.photo, 'w': 2, 'h': 2, 'category': '娱乐'},
+    {'type': 'cpu', 'name': 'CPU监控', 'icon': Icons.memory, 'w': 1, 'h': 1, 'category': '系统'},
+    {'type': 'memory', 'name': '内存监控', 'icon': Icons.storage, 'w': 1, 'h': 1, 'category': '系统'},
+    {'type': 'network', 'name': '网络状态', 'icon': Icons.network_check, 'w': 1, 'h': 1, 'category': '系统'},
+    {'type': 'storage', 'name': '存储使用', 'icon': Icons.sd_storage, 'w': 1, 'h': 1, 'category': '系统'},
+    {'type': 'steps', 'name': '步数统计', 'icon': Icons.directions_walk, 'w': 1, 'h': 1, 'category': '健康'},
+    {'type': 'heart_rate', 'name': '心率', 'icon': Icons.favorite, 'w': 1, 'h': 1, 'category': '健康'},
+    {'type': 'timer', 'name': '计时器', 'icon': Icons.hourglass_empty, 'w': 1, 'h': 1, 'category': '工具'},
+    {'type': 'alarm', 'name': '闹钟', 'icon': Icons.alarm, 'w': 1, 'h': 1, 'category': '时间'},
+    {'type': 'moon_phase', 'name': '月相', 'icon': Icons.nightlight_round, 'w': 1, 'h': 1, 'category': '生活'},
+    {'type': 'sunrise', 'name': '日出日落', 'icon': Icons.wb_twilight, 'w': 2, 'h': 1, 'category': '生活'},
+    {'type': 'todo', 'name': '待办事项', 'icon': Icons.check_circle_outline, 'w': 2, 'h': 2, 'category': '工具'},
+    {'type': 'flashlight', 'name': '手电筒', 'icon': Icons.flashlight_on, 'w': 1, 'h': 1, 'category': '快捷'},
+    {'type': 'calculator', 'name': '计算器', 'icon': Icons.calculate, 'w': 2, 'h': 2, 'category': '工具'},
+    {'type': 'compass', 'name': '指南针', 'icon': Icons.explore, 'w': 2, 'h': 2, 'category': '工具'},
+    {'type': 'sound', 'name': '音量控制', 'icon': Icons.volume_up, 'w': 2, 'h': 1, 'category': '快捷'},
+    {'type': 'brightness', 'name': '亮度调节', 'icon': Icons.brightness_6, 'w': 2, 'h': 1, 'category': '快捷'},
+    {'type': 'wifi_toggle', 'name': 'WiFi开关', 'icon': Icons.wifi, 'w': 1, 'h': 1, 'category': '快捷'},
+    {'type': 'bluetooth_toggle', 'name': '蓝牙开关', 'icon': Icons.bluetooth, 'w': 1, 'h': 1, 'category': '快捷'},
+    {'type': 'airplane_toggle', 'name': '飞行模式', 'icon': Icons.airplanemode_active, 'w': 1, 'h': 1, 'category': '快捷'},
+    {'type': 'rotation_toggle', 'name': '旋转锁定', 'icon': Icons.screen_rotation, 'w': 1, 'h': 1, 'category': '快捷'},
+    {'type': 'system_info', 'name': '系统信息', 'icon': Icons.computer, 'w': 2, 'h': 2, 'category': '系统'},
+    {'type': 'app_shortcuts', 'name': '应用快捷方式', 'icon': Icons.apps, 'w': 2, 'h': 1, 'category': '快捷'},
   ];
 
   WidgetProvider() {
@@ -108,21 +108,30 @@ class WidgetProvider extends ChangeNotifier {
   Future<void> _loadWidgets() async {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getString('desktop_widgets');
-    if (data != null) {
-      final list = jsonDecode(data) as List;
-      _widgets = list.map((e) => DesktopWidget.fromJson(e)).toList();
-      notifyListeners();
+    if (data != null && data.isNotEmpty) {
+      try {
+        final list = jsonDecode(data) as List;
+        _widgets = list.map((e) => DesktopWidget.fromJson(e)).toList();
+        notifyListeners();
+      } catch (e) {
+        _initDefaultWidgets();
+      }
     } else {
-      _widgets = [
-        DesktopWidget(
-          id: const Uuid().v4(),
-          type: 'clock_digital',
-          x: 1, y: 1,
-          width: 2, height: 1,
-        ),
-      ];
-      await _saveWidgets();
+      _initDefaultWidgets();
     }
+  }
+
+  void _initDefaultWidgets() {
+    _widgets = [
+      DesktopWidget(
+        id: const Uuid().v4(),
+        type: 'clock_digital',
+        x: 1, y: 0,
+        width: 2, height: 1,
+      ),
+    ];
+    _saveWidgets();
+    notifyListeners();
   }
 
   Future<void> _saveWidgets() async {
@@ -131,7 +140,10 @@ class WidgetProvider extends ChangeNotifier {
   }
 
   void addWidget(String type, {int x = 0, int y = 0}) {
-    final template = availableWidgets.firstWhere((w) => w['type'] == type);
+    final template = availableWidgets.firstWhere(
+      (w) => w['type'] == type,
+      orElse: () => availableWidgets.first,
+    );
     _widgets.add(DesktopWidget(
       id: const Uuid().v4(),
       type: type,
@@ -168,9 +180,7 @@ class WidgetProvider extends ChangeNotifier {
     }
   }
 
-  void reorderWidgets(List<DesktopWidget> newOrder) {
-    _widgets = newOrder;
-    _saveWidgets();
-    notifyListeners();
+  void resetWidgets() {
+    _initDefaultWidgets();
   }
 }
