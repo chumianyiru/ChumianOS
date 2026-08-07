@@ -1,63 +1,38 @@
 package com.chumianos.launcher
 
-import android.app.WallpaperManager
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.provider.Settings
-import android.view.KeyEvent
-import android.view.View
-import android.view.WindowInsets
-import android.view.WindowInsetsController
-import android.view.WindowManager
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import java.io.File
-import java.io.FileOutputStream
+import android.app.WallpaperManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import android.view.View
+import android.view.WindowManager
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.chumianos.launcher/system"
-    private var homeKeyReceiver: BroadcastReceiver? = null
-    
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setupFullScreen()
-        registerHomeKeyReceiver()
-        hideSystemUI()
-    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "setWallpaper" -> {
-                    val path = call.argument<String>("path")
-                    if (path != null) {
-                        setWallpaperFromPath(path)
-                        result.success(true)
-                    } else {
-                        result.error("INVALID_PATH", "Wallpaper path is null", null)
-                    }
+                    val assetPath = call.argument<String>("asset")
+                    setWallpaperFromAsset(assetPath ?: "assets/wallpapers/default.jpg")
+                    result.success(true)
                 }
                 "hideNavigationBar" -> {
-                    hideSystemUI()
+                    hideSystemNavigation()
                     result.success(true)
                 }
                 "showNavigationBar" -> {
-                    showSystemUI()
+                    showSystemNavigation()
                     result.success(true)
                 }
                 "expandNotifications" -> {
@@ -83,155 +58,88 @@ class MainActivity : FlutterActivity() {
                 "setSystemSetting" -> {
                     val key = call.argument<String>("key")
                     val value = call.argument<String>("value")
-                    if (key != null && value != null) {
-                        Settings.System.putString(contentResolver, key, value)
-                        result.success(true)
-                    } else {
-                        result.error("INVALID_PARAMS", "Key or value is null", null)
-                    }
+                    setSystemSetting(key ?: "", value ?: "")
+                    result.success(true)
                 }
                 "getSystemSetting" -> {
                     val key = call.argument<String>("key")
-                    if (key != null) {
-                        val value = Settings.System.getString(contentResolver, key)
-                        result.success(value)
-                    } else {
-                        result.error("INVALID_KEY", "Key is null", null)
-                    }
+                    val value = getSystemSetting(key ?: "")
+                    result.success(value)
                 }
                 "setSecureSetting" -> {
                     val key = call.argument<String>("key")
                     val value = call.argument<String>("value")
-                    if (key != null && value != null) {
-                        Settings.Secure.putString(contentResolver, key, value)
-                        result.success(true)
-                    } else {
-                        result.error("INVALID_PARAMS", "Key or value is null", null)
-                    }
+                    setSecureSetting(key ?: "", value ?: "")
+                    result.success(true)
                 }
                 "getSecureSetting" -> {
                     val key = call.argument<String>("key")
-                    if (key != null) {
-                        val value = Settings.Secure.getString(contentResolver, key)
-                        result.success(value)
-                    } else {
-                        result.error("INVALID_KEY", "Key is null", null)
-                    }
+                    val value = getSecureSetting(key ?: "")
+                    result.success(value)
                 }
                 "enableDeveloperOptions" -> {
-                    Settings.Global.putInt(contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 1)
+                    enableDeveloperOptions()
                     result.success(true)
                 }
                 "disableDeveloperOptions" -> {
-                    Settings.Global.putInt(contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0)
+                    disableDeveloperOptions()
                     result.success(true)
                 }
-                "isDeveloperOptionsEnabled" -> {
-                    val enabled = Settings.Global.getInt(contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
-                    result.success(enabled)
-                }
                 "showAndroidEasterEgg" -> {
-                    try {
-                        val intent = Intent("android.settings.APPLICATION_DEVELOPMENT_SETTINGS")
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        startActivity(intent)
-                        result.success(true)
-                    } catch (e: Exception) {
-                        result.error("FAILED", e.message, null)
-                    }
+                    showAndroidEasterEgg()
+                    result.success(true)
                 }
                 "uninstallApp" -> {
                     val packageName = call.argument<String>("packageName")
-                    if (packageName != null) {
-                        uninstallApp(packageName)
-                        result.success(true)
-                    } else {
-                        result.error("INVALID_PACKAGE", "Package name is null", null)
-                    }
+                    uninstallApp(packageName ?: "")
+                    result.success(true)
                 }
                 "killApp" -> {
                     val packageName = call.argument<String>("packageName")
-                    if (packageName != null) {
-                        val am = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
-                        am.killBackgroundProcesses(packageName)
-                        result.success(true)
-                    } else {
-                        result.error("INVALID_PACKAGE", "Package name is null", null)
-                    }
+                    killApp(packageName ?: "")
+                    result.success(true)
                 }
                 "clearAppData" -> {
                     val packageName = call.argument<String>("packageName")
-                    if (packageName != null) {
-                        val am = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
-                        am.clearApplicationUserData()
-                        result.success(true)
-                    } else {
-                        result.error("INVALID_PACKAGE", "Package name is null", null)
-                    }
+                    clearAppData(packageName ?: "")
+                    result.success(true)
                 }
                 else -> result.notImplemented()
             }
         }
     }
 
-    private fun setupFullScreen() {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.insetsController?.let { controller ->
-                controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-            )
-        }
-        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-        window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-        window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-        window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
-    }
-
-    private fun hideSystemUI() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.insetsController?.let { controller ->
-                controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-            )
+    private fun setWallpaperFromAsset(assetPath: String) {
+        try {
+            val wallpaperManager = WallpaperManager.getInstance(this)
+            val inputStream = assets.open(assetPath)
+            wallpaperManager.setStream(inputStream)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
-    private fun showSystemUI() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.insetsController?.show(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-        } else {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
-        }
+    private fun hideSystemNavigation() {
+        window.decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            or View.SYSTEM_UI_FLAG_FULLSCREEN
+        )
+    }
+
+    private fun showSystemNavigation() {
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
     }
 
     private fun expandNotifications() {
         try {
-            val service = getSystemService(Context.STATUS_BAR_SERVICE)
+            val statusBarService = getSystemService("statusbar")
             val statusBarManager = Class.forName("android.app.StatusBarManager")
-            val expand = statusBarManager.getMethod("expandNotificationsPanel")
-            expand.invoke(service)
+            val expandMethod = statusBarManager.getMethod("expandNotificationsPanel")
+            expandMethod.invoke(statusBarService)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -239,105 +147,121 @@ class MainActivity : FlutterActivity() {
 
     private fun expandQuickSettings() {
         try {
-            val service = getSystemService(Context.STATUS_BAR_SERVICE)
+            val statusBarService = getSystemService("statusbar")
             val statusBarManager = Class.forName("android.app.StatusBarManager")
-            val expand = statusBarManager.getMethod("expandSettingsPanel")
-            expand.invoke(service)
+            val expandMethod = statusBarManager.getMethod("expandSettingsPanel")
+            expandMethod.invoke(statusBarService)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     private fun lockScreen() {
-        val policy = getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
-        policy.lockNow()
+        try {
+            Runtime.getRuntime().exec("input keyevent 26")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun rebootSystem() {
         try {
-            val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
-            powerManager.reboot(null)
+            Runtime.getRuntime().exec("su -c reboot")
         } catch (e: Exception) {
-            try {
-                Runtime.getRuntime().exec("reboot")
-            } catch (e2: Exception) {
-                e2.printStackTrace()
-            }
+            e.printStackTrace()
         }
     }
 
     private fun shutdownSystem() {
         try {
-            val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
-            val shutdownMethod = powerManager.javaClass.getMethod("shutdown", Boolean::class.java, String::class.java, Boolean::class.java)
-            shutdownMethod.invoke(powerManager, false, null, false)
+            Runtime.getRuntime().exec("su -c reboot -p")
         } catch (e: Exception) {
-            try {
-                Runtime.getRuntime().exec("reboot -p")
-            } catch (e2: Exception) {
-                e2.printStackTrace()
-            }
+            e.printStackTrace()
         }
     }
 
-    private fun setWallpaperFromPath(path: String) {
+    private fun setSystemSetting(key: String, value: String) {
         try {
-            val bitmap = BitmapFactory.decodeFile(path)
-            val wallpaperManager = WallpaperManager.getInstance(this)
-            wallpaperManager.setBitmap(bitmap)
+            Settings.System.putString(contentResolver, key, value)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun getSystemSetting(key: String): String {
+        return try {
+            Settings.System.getString(contentResolver, key) ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    private fun setSecureSetting(key: String, value: String) {
+        try {
+            Settings.Secure.putString(contentResolver, key, value)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun getSecureSetting(key: String): String {
+        return try {
+            Settings.Secure.getString(contentResolver, key) ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    private fun enableDeveloperOptions() {
+        try {
+            Settings.Global.putInt(contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 1)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun disableDeveloperOptions() {
+        try {
+            Settings.Global.putInt(contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun showAndroidEasterEgg() {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            intent.data = Uri.parse("package:com.android.systemui")
+            startActivity(intent)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     private fun uninstallApp(packageName: String) {
-        val intent = Intent(Intent.ACTION_DELETE)
-        intent.data = android.net.Uri.parse("package:$packageName")
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
-    }
-
-    private fun registerHomeKeyReceiver() {
-        homeKeyReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == Intent.ACTION_CLOSE_SYSTEM_DIALOGS) {
-                    val reason = intent.getStringExtra("reason")
-                    if (reason == "homekey" || reason == "recentapps") {
-                        // Handle home key press
-                    }
-                }
-            }
-        }
-        val filter = IntentFilter(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
-        registerReceiver(homeKeyReceiver, filter)
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
-            hideSystemUI()
+        try {
+            val intent = Intent(Intent.ACTION_DELETE)
+            intent.data = Uri.parse("package:$packageName")
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        hideSystemUI()
+    private fun killApp(packageName: String) {
+        try {
+            Runtime.getRuntime().exec("su -c am force-stop $packageName")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        homeKeyReceiver?.let { unregisterReceiver(it) }
-    }
-
-    override fun onBackPressed() {
-        // Disable back button to prevent exiting launcher
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        return when (keyCode) {
-            KeyEvent.KEYCODE_HOME -> true
-            KeyEvent.KEYCODE_APP_SWITCH -> true
-            else -> super.onKeyDown(keyCode, event)
+    private fun clearAppData(packageName: String) {
+        try {
+            Runtime.getRuntime().exec("su -c pm clear $packageName")
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }
